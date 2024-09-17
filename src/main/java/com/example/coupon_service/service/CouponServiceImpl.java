@@ -22,13 +22,21 @@ public class CouponServiceImpl implements CouponService {
 
 	private static final Logger log = LoggerFactory.getLogger(CouponServiceImpl.class);
 
-	private static final double DEFAULT_THRESHOLD = 0;
+//	private static final double DEFAULT_THRESHOLD = 0;
 
 	@Autowired
 	private CouponRepository couponRepository;
 
 	@Override
 	public Coupon createCoupon(CouponDTO couponDTO) {
+		if(couponDTO == null || couponDTO.getDetails()== null) {
+			throw new IllegalArgumentException("CouponDTO or CouponDetails cannot be null");
+		}
+		CouponDetailsDTO detailsDTO=couponDTO.getDetails();
+		Double threshold = detailsDTO.getThreshold();
+		if(threshold == null) {
+			threshold = 0.0 ;
+		}
 		Coupon coupon = mapToEntity(couponDTO);
 		return couponRepository.save(coupon);
 	}
@@ -66,7 +74,7 @@ public class CouponServiceImpl implements CouponService {
 	private Coupon mapToEntity(CouponDTO couponDTO) {
 		Coupon coupon = new Coupon();
 
-		coupon.setType(CouponType.BXGY);
+		coupon.setType(CouponType.valueOf(couponDTO.getType()));
 
 		coupon.setThreshold(couponDTO.getDetails().getThreshold());
 		coupon.setDiscount(couponDTO.getDetails().getDiscount());
@@ -79,7 +87,7 @@ public class CouponServiceImpl implements CouponService {
 				pq.setProductId(dto.getProductId());
 				pq.setQuantity(dto.getQuantity());
 				return pq;
-			}).collect(Collectors.toList()));
+			}).collect(Collectors.toList()));;
 		}
 
 		if (couponDTO.getDetails().getGetProducts() != null) {
@@ -88,7 +96,7 @@ public class CouponServiceImpl implements CouponService {
 				pq.setProductId(dto.getProductId());
 				pq.setQuantity(dto.getQuantity());
 				return pq;
-			}).collect(Collectors.toList()));
+			}).collect(Collectors.toList()));;
 		}
 
 		coupon.setRepetitionLimit(couponDTO.getDetails().getRepetitionLimit());
@@ -97,13 +105,14 @@ public class CouponServiceImpl implements CouponService {
 
 	private boolean isCouponApplicable(Coupon coupon, CartDTO cartDTO) {
 		Double threshold = coupon.getThreshold();
-		if (threshold != null) {
-			return threshold.doubleValue() <= DEFAULT_THRESHOLD;
-		} else {
+		Double discount= coupon.getDiscount();
 
-			log.error("Coupon threshold is null for coupon ID: " + coupon.getId());
-			return false;
+		if (threshold == null || discount == null) {
+			log.error("Coupon threshold or discount is null for coupon ID: "+ coupon.getId());
+		    return false;
 		}
+		return cartDTO.getTotalPrice() >= threshold ;
+
 	}
 
 	private CartDTO applyCouponToCart(Coupon coupon, CartDTO cartDTO) {
@@ -200,12 +209,17 @@ public class CouponServiceImpl implements CouponService {
 		CouponDTO couponDTO = new CouponDTO();
 
 		CouponDetailsDTO details = new CouponDetailsDTO();
-		details.setThreshold(coupon.getThreshold()); // Make sure this field is set
+		details.setThreshold(coupon.getThreshold()); 
 		details.setDiscount(coupon.getDiscount());
 
 		couponDTO.setDetails(details);
 
 		return couponDTO;
+	}
+
+	public void deleteCouponById(Long couponId) {
+		Coupon coupon = couponRepository.findById(couponId).orElseThrow(() -> new RuntimeException("Coupon not found"));
+		couponRepository.delete(coupon);
 	}
 
 }

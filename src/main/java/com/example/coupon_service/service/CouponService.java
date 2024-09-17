@@ -20,4 +20,6 @@ public interface CouponService {
 	CartDTO applyCoupon(Long couponId, CartDTO cartDTO);
 
 	CouponDTO getCouponById(Long id);
+
+	void deleteCouponById(Long couponId);
 }

@@ -28,7 +28,7 @@ public class Coupon {
 	private Double discount;
 
 	@Column(name = "threshold")
-	private Double threshold=0.0;
+	private Double threshold = 0.0;
 
 	@Column(name = "product_id")
 	private Long productId;
@@ -118,6 +118,5 @@ public class Coupon {
 	public void setRepetitionLimit(Integer repetitionLimit) {
 		this.repetitionLimit = repetitionLimit;
 	}
-	
-	
+
 }
